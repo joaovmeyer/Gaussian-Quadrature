@@ -10,10 +10,11 @@ using namespace std;
 
 
 // Rodrigues formula (works untill about n = 40, then rapidly looses precision (big numbers))
-Vec LegendreCoefficients(int n) {
+Vec LegendreCoefficientsRodrigues(int n) {
 
 	Vec coeffs(2 * n + 1);
 
+	// binomial expansion for (x^2 - 1)^n
 	double sign = n & 1 ? -1.0 : 1.0;
 	for (int k = 0; k <= n; ++k) {
 		coeffs[2 * k] += sign * binomialCoefficient(n, k);
@@ -47,6 +48,38 @@ Vec LegendreCoefficients(int n) {
 	}
 
 	return coeffs;
+}
+
+
+// uses the recurrent relation (n+1) * P_n+1 = (2n + 1)x * P_n - n * P_n-1, with P_0 = 1 and P_1 = x
+// using this over Rodrigues formula gives much greater numerical stability, being able to go beyond n = 100
+// this is also more easily adaptable. For example, generating Chebyshev polynomials would be almost the same,
+// but with term1 = -1.0 and term2 = 2.0 (not tested but should be true)
+void recurrenceRelation(Vec& Pnext, const Vec& Pnow, const Vec& Plast, int n = 0) {
+	double term1 = -n / (n + 1.0);
+	double term2 = (2.0 * n + 1.0) / (n + 1.0);
+
+	Pnext[0] = term1 * Plast[0];
+	for (int i = 0; i < n - 1; ++i) {
+		Pnext[i + 1] = term2 * Pnow[i] + term1 * Plast[i + 1];
+	}
+	Pnext[n] = term2 * Pnow[n - 1];
+	Pnext[n + 1] = term2 * Pnow[n];
+}
+
+Vec LegendreCoefficients(int n) {
+
+	Vec Plast(n + 1, 0.0), Pnow(n + 1, 0.0), Pnext(n + 1, 0.0);
+
+	Pnow[0] = 1.0;
+
+	for (int i = 0; i < n; ++i) {
+		recurrenceRelation(Pnext, Pnow, Plast, i);
+		std::swap(Plast, Pnow);
+		std::swap(Pnow, Pnext);
+	}
+
+	return Pnow;
 }
 
 
