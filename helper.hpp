@@ -9,7 +9,16 @@
 constexpr const double PI = 3.14159265359;
 
 using Vec = std::vector<double>;
+using Mat = std::vector<std::vector<double>>;
 using Func = std::function<double(double)>;
+
+Mat makeMat(size_t n, size_t m, double p = 0.0) {
+	return std::vector<std::vector<double>>(n, std::vector<double>(m, p));
+}
+
+Func constFunc(double n = 0.0) {
+	return [n](double x) { return n; };
+}
 
 std::ostream& operator << (std::ostream& os, const Vec& v) {
 
@@ -41,7 +50,6 @@ Vec multPolynomials(const Vec& coeffs1, const Vec& coeffs2) {
 	return coeffs;
 }
 
-
 double evaluatePolynomial(const Vec& coeffs, double x) {
 	double v = coeffs.back();
 
@@ -61,6 +69,20 @@ double evaluatePolynomialDerivative(const Vec& coeffs, double x) {
 
 	return v;
 }
+
+void plotPolynomial(const Vec& coeffs, Graph* graph, double a = -1.0, double b = 1.0, int n = 20) {
+
+	double step = (b - a) / (n - 1);
+
+	Line l;
+	for (int i = 0; i < n; ++i) {
+		double x = a + step * i;
+		l.addPoint(Point(x, evaluatePolynomial(coeffs, x)));
+	}
+
+	graph->addLine(l);
+}
+
 
 
 uint64_t factorial(int n) {
